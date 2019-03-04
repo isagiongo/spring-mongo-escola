@@ -1,15 +1,19 @@
 package com.isagiongo.escola.models;
 
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.springframework.format.annotation.DateTimeFormat;
 
 public class Aluno {
 	
 	private ObjectId id;
 	private String nome;
-	private LocalDate dataNascimento;
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	private Date dataNascimento;
+	
 	private List<Nota> notas;
 	private Curso curso;
 	private List<Habilidade> habilidades;
@@ -25,10 +29,10 @@ public class Aluno {
 	public void setNome(String nome) {
 		this.nome = nome;
 	}
-	public LocalDate getDataNascimento() {
+	public Date getDataNascimento() {
 		return dataNascimento;
 	}
-	public void setDataNascimento(LocalDate dataNascimento) {
+	public void setDataNascimento(Date dataNascimento) {
 		this.dataNascimento = dataNascimento;
 	}
 	public List<Nota> getNotas() {
@@ -49,4 +53,9 @@ public class Aluno {
 	public void setHabilidades(List<Habilidade> habilidades) {
 		this.habilidades = habilidades;
 	}
+	@Override
+	public String toString() {
+		return "Aluno [nome=" + nome + ", dataNascimento=" + dataNascimento + "]";
+	}
+	
 }
