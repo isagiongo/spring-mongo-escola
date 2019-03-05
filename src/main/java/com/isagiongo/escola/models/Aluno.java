@@ -4,15 +4,11 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
-@Document
 public class Aluno {
 	
-	@Id
-	private String id;
+	private ObjectId id;
 	
 	private String nome;
 
@@ -25,10 +21,10 @@ public class Aluno {
 	
 	private List<Habilidade> habilidades;
 	
-	public String getId() {
+	public ObjectId getId() {
 		return id;
 	}
-	public void setId(String id) {
+	public void setId(ObjectId id) {
 		this.id = id;
 	}
 	public String getNome() {
