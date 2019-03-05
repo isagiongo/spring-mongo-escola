@@ -4,6 +4,12 @@ public class Nota {
 	
 	private Double nota;
 	
+	public Nota() {}
+	
+	public Nota(Double nota) {
+		this.nota = nota;
+	}
+	
 	public Double getNota() {
 		return nota;
 	}

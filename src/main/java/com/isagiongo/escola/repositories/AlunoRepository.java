@@ -1,9 +1,13 @@
 package com.isagiongo.escola.repositories;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Repository;
 
 import com.isagiongo.escola.codecs.AlunoCodec;
@@ -11,12 +15,49 @@ import com.isagiongo.escola.models.Aluno;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 
 @Repository
 public class AlunoRepository {
 
+	private MongoClient cliente;
+	private MongoDatabase bancoDeDados;
+
 	public void salvar(Aluno aluno) {
+		criaConexao();
+		MongoCollection<Aluno> alunos = this.bancoDeDados.getCollection("alunos", Aluno.class);
+		if (aluno.getId() == null) {
+			alunos.insertOne(aluno);
+		} else {
+			alunos.updateOne(Filters.eq("_id", aluno.getId()), new Document("$set", aluno));
+		}
+	}
+
+	public List<Aluno> obterTodosAlunos() {
+		criaConexao();
+		MongoCollection<Aluno> alunos = this.bancoDeDados.getCollection("alunos", Aluno.class);
+
+		MongoCursor<Aluno> resultado = alunos.find().iterator();
+
+		List<Aluno> alunosEncontrados = new ArrayList<>();
+		while (resultado.hasNext()) {
+			Aluno aluno = resultado.next();
+			alunosEncontrados.add(aluno);
+		}
+
+		return alunosEncontrados;
+	}
+
+	public Aluno obterAlunoPor(String id) {
+		criaConexao();
+		MongoCollection<Aluno> alunos = this.bancoDeDados.getCollection("alunos", Aluno.class);
+		Aluno aluno = alunos.find(Filters.eq("_id", new ObjectId(id))).first();
+		return aluno;
+	}
+
+	private void criaConexao() {
 		Codec<Document> codec = MongoClient.getDefaultCodecRegistry().get(Document.class);
 		AlunoCodec alunoCodec = new AlunoCodec(codec);
 
@@ -25,9 +66,50 @@ public class AlunoRepository {
 
 		MongoClientOptions options = MongoClientOptions.builder().codecRegistry(registro).build();
 
-		MongoClient cliente = new MongoClient("localhost:27017", options);
-		MongoDatabase bancoDeDados = cliente.getDatabase("test");
-		MongoCollection<Aluno> alunos = bancoDeDados.getCollection("alunos", Aluno.class);
-		alunos.insertOne(aluno);
+		cliente = new MongoClient("localhost:27017", options);
+		bancoDeDados = cliente.getDatabase("test");
+	}
+
+	public List<Aluno> pesquisarPor(String nome) {
+		criaConexao();
+		MongoCollection<Aluno> alunoCollection = this.bancoDeDados.getCollection("alunos", Aluno.class);
+		MongoCursor<Aluno> resultados = alunoCollection.find(Filters.eq("nome", nome), Aluno.class).iterator();
+		List<Aluno> alunos = popularAlunos(resultados);
+
+		fecharConexao();
+
+		return alunos;
+	}
+
+	private List<Aluno> popularAlunos(MongoCursor<Aluno> resultados) {
+		List<Aluno> alunos = new ArrayList<>();
+
+		while (resultados.hasNext()) {
+			alunos.add(resultados.next());
+		}
+		return alunos;
+	}
+
+	private void fecharConexao() {
+		this.cliente.close();
+	}
+
+	public List<Aluno> pesquisarPor(String classificacao, Double nota) {
+		criaConexao();
+		MongoCollection<Aluno> alunoCollection = this.bancoDeDados.getCollection("alunos", Aluno.class);
+		MongoCursor<Aluno> resultados = null;
+
+		if (classificacao.equals("reprovados")) {
+			resultados = alunoCollection.find(Filters.lt("notas", nota)).iterator();
+		} else if (classificacao.equals("aprovados")) {
+			resultados = alunoCollection.find(Filters.gte("notas", nota)).iterator();
+		}
+
+		List<Aluno> alunos = popularAlunos(resultados);
+
+		fecharConexao();
+
+		return alunos;
+
 	}
 }
